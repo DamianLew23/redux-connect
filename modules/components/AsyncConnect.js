@@ -66,11 +66,21 @@ export class AsyncConnect extends Component {
 
   isLoaded() {
     const { reduxConnectStore } = this.props;
+
+    console.log(
+      "isLoaded - reduxConnectStore.getState()",
+      reduxConnectStore.getState()
+    );
     return getMutableState(reduxConnectStore.getState()).reduxAsyncConnect
       .loaded;
   }
 
   loadAsyncData({ reduxConnectStore, ...otherProps }) {
+    console.log(
+      "loadAsyncData - reduxConnectStore",
+      reduxConnectStore.getState()
+    );
+    console.log("loadAsyncData - otherProps", otherProps);
     const { location, beginGlobalLoad, endGlobalLoad } = this.props;
     const loadResult = loadAsyncConnect({
       ...otherProps,
