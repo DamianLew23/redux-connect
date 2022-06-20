@@ -10,48 +10,31 @@ import { getMutableState } from "../helpers/state";
 export class AsyncConnect extends Component {
   constructor(props) {
     super(props);
-    console.log("AsyncConnect - props", props);
-    this.state = {
-      previousLocation: this.isLoaded() ? null : props.location
-    };
 
-    console.log("AsyncConnect - state", this.state);
+    this.state = {
+      previousLocation: this.isLoaded() ? null : props.location,
+      isInitialLoaded: false
+    };
 
     this.mounted = false;
     this.loadDataCounter = 0;
   }
 
   componentDidMount() {
-    console.log("AsyncConnect - componentDidMount");
-
     this.mounted = true;
     const dataLoaded = this.isLoaded();
 
-    console.log("AsyncConnect - componentDidMount - dataLoaded", dataLoaded);
-
     // we dont need it if we already made it on server-side
-
-    this.loadAsyncData(this.props);
+    if (!dataLoaded) {
+      this.loadAsyncData(this.props);
+    }
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
     // eslint-disable-line camelcase
-
     const { location, reloadOnPropsChange } = this.props;
     const navigated = location !== nextProps.location;
 
-    console.log(
-      "AsyncConnect - UNSAFE_componentWillReceiveProps - location",
-      location
-    );
-    console.log(
-      "AsyncConnect - UNSAFE_componentWillReceiveProps - reloadOnPropsChange",
-      reloadOnPropsChange
-    );
-    console.log(
-      "AsyncConnect - UNSAFE_componentWillReceiveProps - navigated",
-      navigated
-    );
     // Allow a user supplied function to determine if an async reload is necessary
     if (navigated && reloadOnPropsChange(this.props, nextProps)) {
       this.loadAsyncData(nextProps);
@@ -59,23 +42,17 @@ export class AsyncConnect extends Component {
   }
 
   componentWillUnmount() {
-    console.log("AsyncConnect - componentWillUnmount");
     this.mounted = false;
   }
 
   isLoaded() {
     const { reduxConnectStore } = this.props;
-
-    console.log(
-      "isLoaded - getMutableState(reduxConnectStore.getState()).reduxAsyncConnect.loaded",
-      getMutableState(reduxConnectStore.getState()).reduxAsyncConnect.loaded
-    );
     return getMutableState(reduxConnectStore.getState()).reduxAsyncConnect
       .loaded;
   }
 
   loadAsyncData({ reduxConnectStore, ...otherProps }) {
-    console.log("loadAsyncData - otherProps", otherProps);
+    console.log("loadAsyncData");
     const { location, beginGlobalLoad, endGlobalLoad } = this.props;
     const loadResult = loadAsyncConnect({
       ...otherProps,
@@ -86,15 +63,17 @@ export class AsyncConnect extends Component {
 
     // TODO: think of a better solution to a problem?
     this.loadDataCounter += 1;
-    console.log("AsyncConnect - this.loadDataCounter", this.loadDataCounter);
     beginGlobalLoad();
-    console.log("AsyncConnect - beginGlobalLoad()");
+    console.log("after - beginGlobalLoad");
     return ((loadDataCounterOriginal) =>
       loadResult.then(() => {
         // We need to change propsToShow only if loadAsyncData that called this promise
         // is the last invocation of loadAsyncData method. Otherwise we can face a situation
         // when user is changing route several times and we finally show him route that has
         // loaded props last time and not the last called route
+        console.log("this.loadDataCounter", this.loadDataCounter);
+        console.log("loadDataCounterOriginal", loadDataCounterOriginal);
+        console.log("this.mounted", this.mounted);
         if (
           this.loadDataCounter === loadDataCounterOriginal &&
           this.mounted !== false
@@ -102,23 +81,35 @@ export class AsyncConnect extends Component {
           this.setState({ previousLocation: null });
         }
 
+        const { isInitialLoaded } = this.state;
+
+        console.log("isInitialLoaded", isInitialLoaded);
+
+        if (!isInitialLoaded) {
+          this.setState({ isInitialLoaded: true });
+        }
+
         // TODO: investigate race conditions
         // do we need to call this if it's not last invocation?
         endGlobalLoad();
-        console.log("AsyncConnect - endGlobalLoad()");
+        console.log("after - endGlobalLoad()");
       }))(this.loadDataCounter);
   }
 
   render() {
-    console.log("AsyncConnect - render()");
-
-    const { previousLocation } = this.state;
+    const { previousLocation, isInitialLoaded } = this.state;
     const { location, render } = this.props;
 
-    console.log("AsyncConnect - render() - previousLocation", previousLocation);
-    console.log("AsyncConnect - render() - location", location);
+    console.log("previousLocation", previousLocation);
+    console.log("location", location);
+    console.log("isInitialLoaded", isInitialLoaded);
 
-    return (
+    return isInitialLoaded ? (
+      <Route
+        location={previousLocation || location}
+        render={() => render(this.props)}
+      />
+    ) : (
       <Route
         location={previousLocation || location}
         render={() => render(this.props)}
