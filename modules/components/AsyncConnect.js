@@ -30,9 +30,8 @@ export class AsyncConnect extends Component {
     console.log("AsyncConnect - componentDidMount - dataLoaded", dataLoaded);
 
     // we dont need it if we already made it on server-side
-    if (!dataLoaded) {
-      this.loadAsyncData(this.props);
-    }
+
+    this.loadAsyncData(this.props);
   }
 
   UNSAFE_componentWillReceiveProps(nextProps) {
@@ -68,18 +67,14 @@ export class AsyncConnect extends Component {
     const { reduxConnectStore } = this.props;
 
     console.log(
-      "isLoaded - reduxConnectStore.getState()",
-      reduxConnectStore.getState()
+      "isLoaded - getMutableState(reduxConnectStore.getState()).reduxAsyncConnect.loaded",
+      getMutableState(reduxConnectStore.getState()).reduxAsyncConnect.loaded
     );
     return getMutableState(reduxConnectStore.getState()).reduxAsyncConnect
       .loaded;
   }
 
   loadAsyncData({ reduxConnectStore, ...otherProps }) {
-    console.log(
-      "loadAsyncData - reduxConnectStore",
-      reduxConnectStore.getState()
-    );
     console.log("loadAsyncData - otherProps", otherProps);
     const { location, beginGlobalLoad, endGlobalLoad } = this.props;
     const loadResult = loadAsyncConnect({
