@@ -117,6 +117,9 @@ export class AsyncConnect extends Component {
     const { previousLocation } = this.state;
     const { location, render } = this.props;
 
+    console.log("AsyncConnect - render() - previousLocation", previousLocation);
+    console.log("AsyncConnect - render() - location", location);
+
     return (
       <Route
         location={previousLocation || location}
