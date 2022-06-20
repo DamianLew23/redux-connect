@@ -19,6 +19,8 @@ export class AsyncConnect extends Component {
 
     this.mounted = false;
     this.loadDataCounter = 0;
+
+    this.loadAsyncData(this.props);
   }
 
   componentDidMount() {
